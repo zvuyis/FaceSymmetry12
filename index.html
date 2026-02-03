@@ -22,7 +22,7 @@
 <body>
     <div id="landing">
         <h1>סימטריית פנים</h1>
-        <p>גלו איך הייתם נראים אם שני צדי הפנים שלכם היו זהים לחלוטין.<br>לאחר הלחיצה, יש לאשר גישה למצלמה.</p>
+        <p>גלו איך הייתם נראים אם שני צדי הפנים שלכם היו זהים.<br>מערכת הייצוב מופעלת להחלקה מקסימלית.</p>
         <button id="startBtn" onclick="_0x1122()">התחלה</button>
     </div>
 
@@ -40,6 +40,7 @@
     <script>
         const _0x1a2b = document.getElementById('video'), _0x3c4d = document.getElementById('canvas'), _0x5e6f = _0x3c4d.getContext('2d');
         let _0x7a8b = 'none', _0x9c0d, _0x1e2f = [], _0x3a4b = !1;
+        let _0xSmoothedX = 0; // המשתנה שישמור את המיקום המיוצב
 
         async function _0x1122() {
             document.getElementById('landing').style.display = 'none';
@@ -57,6 +58,7 @@
             _0x1a2b.onloadedmetadata = () => { 
                 _0x3c4d.width = _0x1a2b.videoWidth; 
                 _0x3c4d.height = _0x1a2b.videoHeight; 
+                _0xSmoothedX = _0x3c4d.width / 2; // התחלה מהמרכז
                 _0x4d5e(); 
             };
         }
@@ -71,26 +73,36 @@
             setInterval(async () => {
                 const _0x3f4e = await faceapi.detectAllFaces(_0x1a2b, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
                 _0x5e6f.clearRect(0, 0, _0x3c4d.width, _0x3c4d.height);
+                
+                const _0x4c5d = _0x1a2b.videoWidth, _0x3b4a = _0x1a2b.videoHeight;
+
                 if (_0x3f4e.length > 0) {
-                    const _0x1d2e = _0x3f4e[0].landmarks, _0x5b6c = _0x1d2e.getNose()[0].x, _0x4c5d = _0x1a2b.videoWidth, _0x3b4a = _0x1a2b.videoHeight;
-                    if (_0x7a8b === 'none') _0x5e6f.drawImage(_0x1a2b, 0, 0, _0x3c4d.width, _0x3c4d.height);
-                    else if (_0x7a8b === 'left') {
-                        _0x5e6f.drawImage(_0x1a2b, 0, 0, _0x5b6c, _0x3b4a, 0, 0, _0x5b6c, _0x3b4a);
-                        _0x5e6f.save(); _0x5e6f.translate(_0x5b6c * 2, 0); _0x5e6f.scale(-1, 1);
-                        _0x5e6f.drawImage(_0x1a2b, 0, 0, _0x5b6c, _0x3b4a, 0, 0, _0x5b6c, _0x3b4a); _0x5e6f.restore();
+                    const _0x1d2e = _0x3f4e[0].landmarks, _0xTargetX = _0x1d2e.getNose()[0].x;
+                    
+                    // מנגנון הייצוב: התקדמות של 10% בכל פריים לעבר היעד
+                    _0xSmoothedX += (_0xTargetX - _0xSmoothedX) * 0.1;
+                    
+                    if (_0x7a8b === 'none') {
+                        _0x5e6f.drawImage(_0x1a2b, 0, 0, _0x3c4d.width, _0x3c4d.height);
+                    } else if (_0x7a8b === 'left') {
+                        _0x5e6f.drawImage(_0x1a2b, 0, 0, _0xSmoothedX, _0x3b4a, 0, 0, _0xSmoothedX, _0x3b4a);
+                        _0x5e6f.save(); _0x5e6f.translate(_0xSmoothedX * 2, 0); _0x5e6f.scale(-1, 1);
+                        _0x5e6f.drawImage(_0x1a2b, 0, 0, _0xSmoothedX, _0x3b4a, 0, 0, _0xSmoothedX, _0x3b4a); _0x5e6f.restore();
                     } else if (_0x7a8b === 'right') {
-                        const _0x2a3b = _0x4c5d - _0x5b6c;
-                        _0x5e6f.drawImage(_0x1a2b, _0x5b6c, 0, _0x2a3b, _0x3b4a, _0x5b6c, 0, _0x2a3b, _0x3b4a);
-                        _0x5e6f.save(); _0x5e6f.translate(_0x5b6c * 2, 0); _0x5e6f.scale(-1, 1);
-                        _0x5e6f.drawImage(_0x1a2b, _0x5b6c, 0, _0x2a3b, _0x3b4a, _0x5b6c, 0, _0x2a3b, _0x3b4a); _0x5e6f.restore();
+                        const _0x2a3b = _0x4c5d - _0xSmoothedX;
+                        _0x5e6f.drawImage(_0x1a2b, _0xSmoothedX, 0, _0x2a3b, _0x3b4a, _0xSmoothedX, 0, _0x2a3b, _0x3b4a);
+                        _0x5e6f.save(); _0x5e6f.translate(_0xSmoothedX * 2, 0); _0x5e6f.scale(-1, 1);
+                        _0x5e6f.drawImage(_0x1a2b, _0xSmoothedX, 0, _0x2a3b, _0x3b4a, _0xSmoothedX, 0, _0x2a3b, _0x3b4a); _0x5e6f.restore();
                     }
-                } else _0x5e6f.drawImage(_0x1a2b, 0, 0, _0x3c4d.width, _0x3c4d.height);
+                } else {
+                    _0x5e6f.drawImage(_0x1a2b, 0, 0, _0x3c4d.width, _0x3c4d.height);
+                }
             }, 40);
         }
 
         function _0x5a31() { 
             const _0x1c2d = document.createElement('a'); 
-            _0x1c2d.download = 'capture.png'; 
+            _0x1c2d.download = 'mirror.png'; 
             _0x1c2d.href = _0x3c4d.toDataURL('image/png'); 
             _0x1c2d.click(); 
         }
